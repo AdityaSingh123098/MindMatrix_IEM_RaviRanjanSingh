@@ -1,16 +1,3 @@
-"""
-Communication Gap Analyzer
-===========================
-A rule-based, deterministic NLP engine for detecting communication breakdowns
-in multi-participant conversations without external AI/LLM APIs.
-
-Detection Modules:
-- Unanswered Questions
-- Repeated Requests
-- Repeated Clarification Requests
-- Unresolved Topics
-- Ignored Responses / Side-tracking
-"""
 
 import re
 from typing import List, Dict, Any, Optional, Tuple, Set
@@ -18,12 +5,8 @@ from collections import defaultdict
 
 
 class CommunicationGapAnalyzer:
-    """
-    Analyzes group chat transcripts to pinpoint communication gaps,
-    associated speakers, affected messages, and explainable evidence.
-    """
+  
 
-    # Common English stopwords to ignore in topic and keyword matching
     STOPWORDS = {
         "a", "about", "above", "after", "again", "against", "all", "am", "an", "and",
         "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being",
@@ -47,7 +30,6 @@ class CommunicationGapAnalyzer:
         "yourself", "yourselves", "ok", "okay", "yeah", "yes", "sure", "thanks", "hello", "hi"
     }
 
-    # Request trigger patterns
     REQUEST_PATTERNS = [
         r"(?:can|could)\s+you\s+(?:please\s+)?(?:send|share|provide|give|upload|forward|email|link)",
         r"please\s+(?:send|share|provide|give|upload|forward|email|link)",
@@ -58,7 +40,6 @@ class CommunicationGapAnalyzer:
         r"reminder\s+to\s+(?:send|share|provide)",
     ]
 
-    # Clarification trigger patterns
     CLARIFICATION_PATTERNS = [
         r"\bwhat\s+do\s+you\s+mean\b",
         r"\bcan\s+you\s+clarify\b",
@@ -77,7 +58,6 @@ class CommunicationGapAnalyzer:
         r"\bi('m|\s+am)\s+confused\b",
     ]
 
-    # Topic introduction patterns
     TOPIC_INTRO_PATTERNS = [
         r"\babout\s+(?:the\s+)?([a-zA-Z0-9_\-\s]{3,30}?)(?:\?|\.|\,|$)",
         r"\bregarding\s+(?:the\s+)?([a-zA-Z0-9_\-\s]{3,30}?)(?:\?|\.|\,|$)",
@@ -89,14 +69,12 @@ class CommunicationGapAnalyzer:
         r"\bwhat\s+about\s+(?:the\s+)?([a-zA-Z0-9_\-\s]{3,30}?)(?:\?|\.|\,|$)",
     ]
 
-    # Resolution keywords that signify closure of a topic/request
     RESOLUTION_KEYWORDS = {
         "fixed", "resolved", "done", "completed", "approved", "agreed", "decided",
         "scheduled", "merged", "shipped", "sent", "attached", "updated", "finalized",
         "closed", "settled", "taken care of", "sorted"
     }
 
-    # Standalone time words for answering "when" / "what time"
     TIME_INDICATORS = {
         "today", "tomorrow", "tonight", "yesterday", "monday", "tuesday",
         "wednesday", "thursday", "friday", "saturday", "sunday", "noon", "midnight",
@@ -123,7 +101,6 @@ class CommunicationGapAnalyzer:
         messages = []
         msg_id = 1
 
-        # Patterns for timestamped or plain "Speaker: Message"
         patterns = [
             # [10:30 AM] Speaker: Message
             re.compile(r"^\[(?:\d{1,2}:\d{2}(?::\d{2})?(?:\s*[APap][Mm])?|\d{4}-\d{2}-\d{2}[^\]]*)\]\s*([^:]+):\s*(.*)$"),
@@ -160,12 +137,10 @@ class CommunicationGapAnalyzer:
                     break
 
             if not matched:
-                # If it's a continuation of the previous message
                 if current_msg:
                     current_msg["message"] += " " + line_str
                     current_msg["raw"] += "\n" + line_str
                 else:
-                    # Generic line without speaker
                     current_msg = {
                         "id": msg_id,
                         "speaker": "Unknown",
@@ -189,7 +164,6 @@ class CommunicationGapAnalyzer:
         text_clean = text.strip()
         if "?" in text_clean:
             return True
-        # Interrogative starter patterns
         interrogative_starts = (
             "who ", "what ", "when ", "where ", "why ", "how ", "which ",
             "can you ", "could you ", "would you ", "will you ", "is there ",
@@ -198,42 +172,32 @@ class CommunicationGapAnalyzer:
         return text_clean.lower().startswith(interrogative_starts)
 
     def _is_request(self, text: str) -> bool:
-        """Checks if a message is an action request."""
         return any(regex.search(text) for regex in self.request_regexes)
 
     def _extract_request_subject(self, text: str) -> str:
-        """Extracts the target noun/phrase of a request for matching repetitions."""
         for regex in self.request_regexes:
             match = regex.search(text)
             if match:
                 remainder = text[match.end():].strip().rstrip(".?!")
-                # Remove leading articles
                 clean_remainder = re.sub(r"^(?:the|a|an|me|us)\s+", "", remainder, flags=re.IGNORECASE)
                 words = [w for w in self._extract_keywords(clean_remainder) if w not in {"please", "thanks"}]
                 if words:
                     return " ".join(words[:4])
                 return clean_remainder[:30]
-        # Fallback to key nouns
         kw = list(self._extract_keywords(text))
         return " ".join(kw[:3]) if kw else "request"
 
     def _is_clarification_request(self, text: str) -> bool:
-        """Checks if a message asks for clarification or expresses lack of understanding."""
         return any(regex.search(text) for regex in self.clarification_regexes)
 
     def _is_direct_answer(self, question_text: str, response_text: str, question_speaker: str, response_speaker: str) -> Tuple[bool, str]:
-        """
-        Determines if response_text addresses question_text.
-        Returns (is_answer, reason).
-        """
+       
         q_lower = question_text.lower()
         r_lower = response_text.lower()
 
-        # Check explicit mention of speaker e.g., "@Neha", "Neha,"
         if question_speaker.lower() in r_lower:
             return True, f"Explicitly addressed {question_speaker}"
 
-        # Check time answering for "when" / "what time"
         if "when" in q_lower or "what time" in q_lower or "which time" in q_lower:
             time_pat = r"\b(?:\d{1,2}:\d{2}(?:\s*(?:am|pm))?|\d{1,2}\s*(?:am|pm|o'clock)|at\s+\d{1,2}(?::\d{2})?)\b"
             has_time_digits = bool(re.search(time_pat, r_lower))
@@ -241,7 +205,6 @@ class CommunicationGapAnalyzer:
             if has_time_digits or has_time_words:
                 return True, "Contains time-specific answer details"
 
-        # Check location answering for "where"
         if "where" in q_lower:
             loc_cues = ["in ", "at ", "room", "link", "drive", "folder", "repo", "slack", "teams", "meet", "zoom", "office"]
             if any(cue in r_lower for cue in loc_cues):
@@ -267,11 +230,7 @@ class CommunicationGapAnalyzer:
         return False, "No topical or contextual alignment"
 
     def detect_unanswered_questions(self, messages: List[Dict[str, Any]], exclude_ids: Optional[Set[int]] = None) -> List[Dict[str, Any]]:
-        """
-        Rule A: Unanswered Questions
-        Detect questions ending with '?' or starting with question words
-        that receive no direct or relevant answer from other participants.
-        """
+       
         gaps = []
         if exclude_ids is None:
             exclude_ids = set()
