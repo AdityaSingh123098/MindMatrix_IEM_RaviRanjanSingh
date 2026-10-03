@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Communication Gap Detector | Multi-Person Conversation Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Header & Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="10" r="1"></circle>
+            <circle cx="8" cy="10" r="1"></circle>
+            <circle cx="16" cy="10" r="1"></circle>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Communication Gap Detector</h1>
+          <p class="brand-subtitle">AI-Free Deterministic NLP Engine for Multi-Person Chat Breakdown Analysis</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="doc-btn" class="btn btn-secondary btn-sm" title="View detection rules and definitions">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Rules & Docs
+        </button>
+        <span class="badge badge-tech">Rule-Based NLP</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    <!-- Left Panel: Input & Sample Presets -->
+    <section class="panel input-panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <span class="step-num">1</span>
+          <h2 class="panel-title">Conversation Input</h2>
+        </div>
+        <div class="panel-actions">
+          <button id="clear-btn" class="btn-ghost" title="Clear text">Clear</button>
+        </div>
+      </div>
+
+      <!-- Quick Preset Buttons -->
+      <div class="presets-section">
+        <label class="section-label">Select a Test Scenario:</label>
+        <div class="presets-grid" id="presets-container">
+          <!-- Dynamically populated or rendered from backend -->
+          {% for sample in samples %}
+          <button class="preset-chip" data-sample-id="{{ sample.id }}">
+            <span class="preset-name">{{ sample.name }}</span>
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Input Form -->
+      <form id="analyze-form" class="analyze-form">
+        <div class="textarea-wrapper">
+          <div class="textarea-header">
+            <span class="format-hint">Format: <code>Speaker: Message</code></span>
+            <span id="char-counter" class="char-counter">0 lines</span>
+          </div>
+          <textarea
+            id="conversation-input"
+            name="conversation"
+            rows="12"
+            placeholder="Paste your conversation transcript here...&#10;&#10;Example:&#10;Neha: What time is the meeting?&#10;Ravi: I am working on the report.&#10;Soham: I'll send the dataset."
+            required
+            spellcheck="false"
+          ></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="analyze-btn" class="btn btn-primary btn-lg">
+            <span class="btn-spinner hidden" id="btn-spinner"></span>
+            <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span id="btn-text">Detect Communication Gaps</span>
+          </button>
+          <span class="shortcut-hint">Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+        </div>
+      </form>
+
+      <!-- Rule Quick Reference Card -->
+      <div class="quick-rules-box">
+        <h3 class="rules-box-title">Detection Capabilities:</h3>
+        <ul class="rules-box-list">
+          <li><strong>Unanswered Questions:</strong> Queries receiving no topic-relevant response</li>
+          <li><strong>Repeated Requests:</strong> Resource/action requests made multiple times</li>
+          <li><strong>Repeated Clarifications:</strong> Persistent confusion loops (e.g., "What do you mean?")</li>
+          <li><strong>Unresolved Topics:</strong> Topics introduced without decisions or closure</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Right Panel: Results & Transcript Highlight -->
+    <section class="panel results-panel">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <span class="step-num">2</span>
+          <h2 class="panel-title">Diagnostic Results</h2>
+        </div>
+        <div class="panel-actions" id="result-actions" style="display: none;">
+          <button id="export-json-btn" class="btn-ghost" title="Copy raw JSON response">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy JSON
+          </button>
+        </div>
+      </div>
+
+      <!-- State: Empty / Waiting -->
+      <div id="empty-state" class="state-container">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </div>
+        <h3 class="empty-title">Ready for Analysis</h3>
+        <p class="empty-description">
+          Select one of the sample scenarios on the left or paste your own group transcript to run the gap detector.
+        </p>
+      </div>
+
+      <!-- State: Loading -->
+      <div id="loading-state" class="state-container hidden">
+        <div class="radar-pulse"></div>
+        <p class="loading-text">Analyzing conversational turn-taking, topic flows, and requests...</p>
+      </div>
+
+      <!-- State: Results Display -->
+      <div id="results-content" class="results-content hidden">
+        <!-- Overview Scorecards -->
+        <div class="metrics-grid">
+          <div class="metric-card score-card">
+            <span class="metric-label">Health Score</span>
+            <div class="score-display">
+              <span id="health-score-val" class="score-number">100</span>
+              <span class="score-unit">/100</span>
+            </div>
+            <span id="health-status-badge" class="health-status-pill status-healthy">Healthy</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Gaps Detected</span>
+            <span id="total-gaps-val" class="metric-number">0</span>
+            <span class="metric-subtext" id="gaps-subtext">0 critical friction points</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Messages</span>
+            <span id="total-msgs-val" class="metric-number">0</span>
+            <span class="metric-subtext" id="participants-count">0 participants</span>
+          </div>
+        </div>
+
+        <!-- Participants Row -->
+        <div class="participants-bar" id="participants-bar">
+          <span class="bar-label">Participants:</span>
+          <div class="participants-tags" id="participants-tags"></div>
+        </div>
+
+        <!-- Gaps Section -->
+        <div class="gaps-section">
+          <div class="section-title-row">
+            <h3 class="section-heading">Detected Communication Gaps</h3>
+            <div class="filter-chips" id="filter-chips">
+              <button class="filter-chip active" data-filter="all">All</button>
+              <button class="filter-chip" data-filter="Unanswered Question">Questions</button>
+              <button class="filter-chip" data-filter="Repeated Request">Requests</button>
+              <button class="filter-chip" data-filter="Repeated Clarification">Clarifications</button>
+              <button class="filter-chip" data-filter="Unresolved Topic">Topics</button>
+            </div>
+          </div>
+
+          <div id="gaps-list" class="gaps-list">
+            <!-- Gap cards injected via JS -->
+          </div>
+        </div>
+
+        <!-- Interactive Conversation Transcript with Highlights -->
+        <div class="transcript-section">
+          <div class="section-title-row">
+            <h3 class="section-heading">Conversation Flow & Highlights</h3>
+            <span class="transcript-help">Highlighted messages triggered gap flags</span>
+          </div>
+          <div id="transcript-feed" class="transcript-feed">
+            <!-- Messages injected via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Rules Documentation Modal -->
+  <dialog id="docs-modal" class="modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Communication Gap Definitions & Logic</h2>
+        <button id="close-modal-btn" class="modal-close-btn" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="doc-block">
+          <span class="doc-badge badge-question">A. Unanswered Question</span>
+          <p><strong>Rule:</strong> Detects interrogative messages (ending with <code>?</code> or interrogative words) where subsequent responses from other participants do not provide an answer, time, location, or topical alignment.</p>
+          <div class="code-example">
+            Neha: What time is the meeting?<br>
+            Ravi: I am working on the report.<br>
+            Soham: I'll send the dataset.<br>
+            <em>&rarr; Flagged: Question received no direct response.</em>
+          </div>
+        </div>
+
+        <div class="doc-block">
+          <span class="doc-badge badge-request">B. Repeated Request</span>
+          <p><strong>Rule:</strong> Detects action/resource requests (e.g., <code>Can you send</code>, <code>Please provide</code>) that are repeated across messages without fulfillment or resolution in between.</p>
+          <div class="code-example">
+            Ravi: Can you send the dataset?<br>
+            Soham: Okay.<br>
+            Ravi: Can you send the dataset?<br>
+            <em>&rarr; Flagged: Request repeated without resolution.</em>
+          </div>
+        </div>
+
+        <div class="doc-block">
+          <span class="doc-badge badge-clarification">C. Repeated Clarification</span>
+          <p><strong>Rule:</strong> Detects repetitive expressions of ambiguity or confusion (e.g., <code>What do you mean?</code>, <code>Which one?</code>, <code>I don't understand</code>), signaling an ongoing communication roadblock.</p>
+          <div class="code-example">
+            Ravi: What do you mean?<br>
+            Alex: Just change the core modules.<br>
+            Soham: Which one?<br>
+            <em>&rarr; Flagged: Multiple clarification requests detected.</em>
+          </div>
+        </div>
+
+        <div class="doc-block">
+          <span class="doc-badge badge-topic">D. Unresolved Topic</span>
+          <p><strong>Rule:</strong> Identifies key topics or proposals introduced (e.g., <code>about X</code>, <code>regarding X</code>, <code>update on X</code>) that receive no concluding agreement, decision, or follow-up before the conversation ends.</p>
+          <div class="code-example">
+            Neha: What about the budget for Q4?<br>
+            Ravi: Let's focus on the demo today.<br>
+            <em>&rarr; Flagged: Topic introduced but no resolution found.</em>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Embedded Sample Data for Instant Client Interaction -->
+  <script id="embedded-samples" type="application/json">
+    {{ samples | tojson | safe }}
+  </script>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

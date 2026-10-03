@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: communication-gap-detector
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free

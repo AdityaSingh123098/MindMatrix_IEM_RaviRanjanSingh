@@ -1,0 +1,100 @@
+[
+  {
+    "id": "sample-1",
+    "name": "No communication gap",
+    "title": "Smooth Project Sync (Healthy Conversation)",
+    "description": "A well-coordinated conversation where team members answer questions directly, share assets, and confirm decisions.",
+    "conversation": "Neha: What time is the team sync today?\nRavi: The sync is scheduled for 3 PM in Room B.\nNeha: Great, I will have the presentation slides ready.\nSoham: I have already uploaded the latest dataset to Drive.\nRavi: Awesome, I reviewed the dataset and everything is approved.",
+    "expected_gaps": []
+  },
+  {
+    "id": "sample-2",
+    "name": "Unanswered question",
+    "title": "Meeting Time Query Ignored (Unanswered Question)",
+    "description": "Neha asks for the meeting time, but Ravi and Soham proceed to talk about reports and datasets without answering.",
+    "conversation": "Neha: What time is the meeting?\nRavi: I am working on the report.\nSoham: I'll send the dataset.",
+    "expected_gaps": [
+      {
+        "type": "Unanswered Question",
+        "speaker": "Neha",
+        "message": "What time is the meeting?"
+      }
+    ]
+  },
+  {
+    "id": "sample-3",
+    "name": "Repeated request",
+    "title": "Dataset Follow-up (Repeated Request)",
+    "description": "Ravi asks for the dataset, receives only an acknowledgment without delivery, and must repeat the exact request.",
+    "conversation": "Ravi: Can you send the dataset?\nSoham: Okay.\nPriya: I am finishing the sprint review slides.\nRavi: Can you send the dataset?",
+    "expected_gaps": [
+      {
+        "type": "Repeated Request",
+        "speaker": "Ravi",
+        "message": "Can you send the dataset?"
+      }
+    ]
+  },
+  {
+    "id": "sample-4",
+    "name": "Clarification request",
+    "title": "Ambiguous Architecture Directive (Repeated Clarification)",
+    "description": "Vague instructions trigger confusion, leading to multiple clarification queries without a clear explanation.",
+    "conversation": "Alex: We need to revamp the entire pipeline logic before tonight.\nRavi: What do you mean?\nAlex: Just tweak the core modules.\nSoham: Can you clarify?\nRavi: Which one?",
+    "expected_gaps": [
+      {
+        "type": "Repeated Clarification",
+        "speaker": "Soham",
+        "message": "Can you clarify?"
+      },
+      {
+        "type": "Repeated Clarification",
+        "speaker": "Ravi",
+        "message": "Which one?"
+      }
+    ]
+  },
+  {
+    "id": "sample-5",
+    "name": "Unresolved topic",
+    "title": "Q4 Budget Sidetracked (Unresolved Topic)",
+    "description": "Neha introduces the Q4 budget topic, but teammates deflect to the client demo and the topic is abandoned without resolution.",
+    "conversation": "Neha: What about the budget for Q4?\nRavi: Let's focus on the client demo first.\nSoham: Yes, the client demo is top priority today.\nNeha: The demo looks stable on staging.",
+    "expected_gaps": [
+      {
+        "type": "Unresolved Topic",
+        "speaker": "Neha",
+        "message": "What about the budget for Q4?"
+      }
+    ]
+  },
+  {
+    "id": "sample-6",
+    "name": "Multiple communication gaps",
+    "title": "Chaotic Release Coordination (Multiple Gaps)",
+    "description": "A high-friction exchange exhibiting unanswered questions, repeated resource requests, clarification confusion, and unresolved topics.",
+    "conversation": "Neha: What time is the production release?\nRavi: Can someone provide the database credentials?\nSoham: What do you mean?\nRavi: Can someone provide the database credentials?\nSoham: Which one?\nAmit: I noticed an issue with the payment gateway.\nPriya: I have to step out for 15 minutes.",
+    "expected_gaps": [
+      {
+        "type": "Unanswered Question",
+        "speaker": "Neha",
+        "message": "What time is the production release?"
+      },
+      {
+        "type": "Repeated Request",
+        "speaker": "Ravi",
+        "message": "Can someone provide the database credentials?"
+      },
+      {
+        "type": "Repeated Clarification",
+        "speaker": "Soham",
+        "message": "Which one?"
+      },
+      {
+        "type": "Unresolved Topic",
+        "speaker": "Amit",
+        "message": "I noticed an issue with the payment gateway."
+      }
+    ]
+  }
+]
